@@ -22,6 +22,14 @@ No kernel driver is needed: BrakeTune talks to the pedals through `hidraw`. It a
 
 Grab a `.deb`, `.rpm` or `.AppImage` from [Releases](https://github.com/szpolny/braketune/releases/latest). The packages install a udev rule so your user can talk to the pedals; with the AppImage, copy [`70-braketune.rules`](src-tauri/udev/70-braketune.rules) to `/etc/udev/rules.d/` and replug the pedals.
 
+### Nix
+
+```sh
+nix run github:szpolny/braketune
+```
+
+On NixOS, add the flake's `nixosModules.default` to install the app and its udev rule. Pin a release with `github:szpolny/braketune/v<version>`.
+
 ## Development
 
 Requires Rust, Node.js and [pnpm](https://pnpm.io). On NixOS, `nix develop` provides everything.
