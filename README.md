@@ -2,27 +2,19 @@
 
 # BrakeTune
 
-The Fanatec control panel doesn't exist on Linux. BrakeTune covers one job: setting the **brake force** of your pedals. Built with Tauri, Rust and Svelte.
+The Fanatec control panel doesn't exist on Linux. BrakeTune brings its **brake force** setting (1–100%) to Linux, the same way the Windows driver does it: by scaling the brake axis in software.
 
-## Features
+## How it works
 
-- Detects Fanatec pedals over USB and sets brake force (1–100%)
-- Remembers your setting and re-applies it whenever the pedals connect
-- Tiny native app, no Wine or Fanatec software required
+BrakeTune reads your pedals, scales the brake axis (100% is the full, unmodified axis) and republishes everything as a virtual controller named **BrakeTune Pedals**. Pick that controller in your game or simulator. The original pedals are hidden while BrakeTune runs, and closing the window keeps it running in the tray.
 
 ## Supported pedals
 
-ClubSport Pedals V3 / V3 Inverted, CSL Elite Pedals, CSL Pedals Load Cell (incl. LC V2).
-
-No kernel driver is needed: BrakeTune talks to the pedals through `hidraw`. It also works alongside [hid-fanatecff](https://github.com/gotzl/hid-fanatecff) if you use it for force feedback.
-
-> **Status:** the load-cell command is confirmed to be accepted by a ClubSport V3, but its effect on the V3 brake curve is not yet verified. Treat it as experimental.
->
-> The command comes from the community-documented protocol of the [hid-fanatecff](https://github.com/gotzl/hid-fanatecff) driver, not from Fanatec. Unofficial and used at your own risk.
+ClubSport Pedals V3 / V3 Inverted, connected to the PC over USB.
 
 ## Install
 
-Grab a `.deb`, `.rpm` or `.AppImage` from [Releases](https://github.com/szpolny/braketune/releases/latest). The packages install a udev rule so your user can talk to the pedals; with the AppImage, copy [`70-braketune.rules`](src-tauri/udev/70-braketune.rules) to `/etc/udev/rules.d/` and replug the pedals.
+Grab a `.deb`, `.rpm` or `.AppImage` from [Releases](https://github.com/szpolny/braketune/releases/latest). The packages install a udev rule that lets your user create the virtual device; with the AppImage, copy [`70-braketune.rules`](src-tauri/udev/70-braketune.rules) to `/etc/udev/rules.d/`, load the `uinput` module and replug the pedals.
 
 ### Nix
 
@@ -30,7 +22,7 @@ Grab a `.deb`, `.rpm` or `.AppImage` from [Releases](https://github.com/szpolny/
 nix run github:szpolny/braketune
 ```
 
-On NixOS, add the flake's `nixosModules.default` to install the app and its udev rule. Pin a release with `github:szpolny/braketune/v<version>`.
+On NixOS, add the flake's `nixosModules.default` to install the app, its udev rule and `uinput` support. Pin a release with `github:szpolny/braketune/v<version>`.
 
 ## Development
 

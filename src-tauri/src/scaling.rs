@@ -2,17 +2,15 @@
 //!
 //! ClubSport V3 pedals connected over USB expose no device-side brake force
 //! setting: the Windows driver rescales the brake axis in software. BrakeTune
-//! does the same. Per Fanatec's manual the strongest setting scales the brake
-//! signal by a factor of three.
+//! does the same: the setting is the share of the full brake axis the pedal
+//! can reach, so 100% is the unmodified axis.
 
 pub const MIN_PERCENT: u8 = 1;
 pub const MAX_PERCENT: u8 = 100;
-const MAX_GAIN: f32 = 3.0;
 
-/// Gain applied to the brake axis: 1.0 at 1% (unmodified) up to 3.0 at 100%.
+/// Gain applied to the brake axis: 0.01 at 1%, 1.0 (unmodified) at 100%.
 pub fn gain(percent: u8) -> f32 {
-    let p = percent.clamp(MIN_PERCENT, MAX_PERCENT);
-    1.0 + (MAX_GAIN - 1.0) * f32::from(p - MIN_PERCENT) / f32::from(MAX_PERCENT - MIN_PERCENT)
+    f32::from(percent.clamp(MIN_PERCENT, MAX_PERCENT)) / f32::from(MAX_PERCENT)
 }
 
 /// Scales `raw` (relative to the axis minimum) and clamps it to the axis range.
@@ -26,35 +24,34 @@ mod tests {
     use super::*;
 
     #[test]
-    fn gain_spans_one_to_three() {
-        assert_eq!(gain(MIN_PERCENT), 1.0);
-        assert_eq!(gain(MAX_PERCENT), 3.0);
-        assert!(gain(50) > 1.9 && gain(50) < 2.1);
+    fn gain_is_the_percentage_of_the_axis() {
+        assert_eq!(gain(MAX_PERCENT), 1.0);
+        assert_eq!(gain(50), 0.5);
+        assert_eq!(gain(MIN_PERCENT), 0.01);
     }
 
     #[test]
     fn gain_clamps_out_of_range_input() {
-        assert_eq!(gain(0), 1.0);
-        assert_eq!(gain(250), 3.0);
+        assert_eq!(gain(0), 0.01);
+        assert_eq!(gain(250), 1.0);
     }
 
     #[test]
-    fn unity_gain_is_a_passthrough() {
+    fn full_force_is_a_passthrough() {
         for raw in [0, 1, 500, 4095] {
-            assert_eq!(scale(raw, 1.0, 0, 4095), raw);
+            assert_eq!(scale(raw, gain(MAX_PERCENT), 0, 4095), raw);
         }
     }
 
     #[test]
-    fn scaling_saturates_at_axis_max() {
-        assert_eq!(scale(1000, 2.0, 0, 4095), 2000);
-        assert_eq!(scale(3000, 3.0, 0, 4095), 4095);
-        assert_eq!(scale(0, 3.0, 0, 4095), 0);
+    fn reduced_force_shrinks_the_axis() {
+        assert_eq!(scale(4000, 0.5, 0, 4095), 2000);
+        assert_eq!(scale(0, 0.5, 0, 4095), 0);
     }
 
     #[test]
     fn scaling_is_relative_to_axis_minimum() {
-        assert_eq!(scale(10, 2.0, 10, 100), 10);
-        assert_eq!(scale(20, 2.0, 10, 100), 30);
+        assert_eq!(scale(10, 0.5, 10, 110), 10);
+        assert_eq!(scale(110, 0.5, 10, 110), 60);
     }
 }

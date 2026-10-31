@@ -11,6 +11,7 @@
   webkitgtk_4_1,
   openssl,
   glib-networking,
+  libayatana-appindicator,
 }:
 
 rustPlatform.buildRustPackage (finalAttrs: {
@@ -55,7 +56,12 @@ rustPlatform.buildRustPackage (finalAttrs: {
     webkitgtk_4_1
     openssl
     glib-networking
+    libayatana-appindicator
   ];
+
+  preFixup = ''
+    gappsWrapperArgs+=(--prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ libayatana-appindicator ]})
+  '';
 
   postInstall = ''
     install -Dm444 src-tauri/udev/70-braketune.rules \

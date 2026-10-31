@@ -3,15 +3,18 @@
   import {
     MAX_PERCENT,
     MIN_PERCENT,
+    getAutostart,
     getStatus,
     onStatusChanged,
+    setAutostart,
     setBrakeForce,
     type Status,
   } from "./api";
 
   let status = $state<Status | null>(null);
-  let level = $state(MIN_PERCENT);
+  let level = $state(MAX_PERCENT);
   let error = $state("");
+  let autostart = $state(false);
   let timer: ReturnType<typeof setTimeout>;
 
   const connected = $derived(status?.device != null);
@@ -29,7 +32,17 @@
     }, 120);
   }
 
+  async function toggleAutostart(event: Event) {
+    const enabled = (event.currentTarget as HTMLInputElement).checked;
+    try {
+      autostart = await setAutostart(enabled);
+    } catch (e) {
+      error = String(e);
+    }
+  }
+
   onMount(() => {
+    getAutostart().then((enabled) => (autostart = enabled));
     getStatus().then((next) => {
       status = next;
       level = next.settings.brake_force;
@@ -64,7 +77,7 @@
       disabled={!connected}
       style="--fill: {fill}%"
     />
-    <div class="hint"><span>Stock</span><span>3× signal</span></div>
+    <div class="hint"><span>Light</span><span>Full axis</span></div>
     {#if error}<p class="error">{error}</p>{/if}
   </section>
 
@@ -73,6 +86,11 @@
     <strong>BrakeTune Pedals</strong>. The original pedals are hidden while
     BrakeTune is running.
   </p>
+
+  <label class="toggle">
+    <input type="checkbox" checked={autostart} onchange={toggleAutostart} />
+    <span>Start with system and keep running in the tray</span>
+  </label>
 
   <footer>Unofficial. Not affiliated with Fanatec.</footer>
 </main>
@@ -149,6 +167,9 @@
 
   .note { font-size: 13px; line-height: 1.5; color: var(--muted); }
   .note strong { color: var(--text); }
+
+  .toggle { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); cursor: pointer; }
+  .toggle input { accent-color: var(--accent); width: 16px; height: 16px; }
 
   footer { margin-top: auto; font-size: 12px; color: var(--muted); text-align: center; }
 </style>

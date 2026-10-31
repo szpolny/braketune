@@ -23,3 +23,6 @@ export const setBrakeForce = (percent: number) =>
   invoke<Status>("set_brake_force", { percent });
 export const onStatusChanged = (handler: (status: Status) => void) =>
   listen<Status>("status-changed", (e) => handler(e.payload));
+export const getAutostart = () => invoke<boolean>("get_autostart");
+export const setAutostart = (enabled: boolean) =>
+  invoke<boolean>("set_autostart", { enabled });

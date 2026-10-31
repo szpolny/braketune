@@ -13,7 +13,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            brake_force: MIN_PERCENT,
+            brake_force: MAX_PERCENT,
         }
     }
 }

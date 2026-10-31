@@ -1,2 +1,3 @@
-# Grant the logged-in user access to Fanatec devices so BrakeTune can configure them.
-SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0eb7", TAG+="uaccess"
+# Let the logged-in user create the virtual pedal device and read Fanatec input devices.
+KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"
+SUBSYSTEM=="input", ATTRS{id/vendor}=="0eb7", TAG+="uaccess"
