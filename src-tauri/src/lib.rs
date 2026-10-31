@@ -3,9 +3,9 @@ mod mapper;
 mod scaling;
 mod settings;
 
-use std::{path::PathBuf, sync::Mutex};
+use std::{path::PathBuf, sync::Mutex, thread, time::Duration};
 
-use mapper::{DeviceInfo, Mapper};
+use mapper::{DeviceInfo, Mapper, PedalReading};
 use serde::Serialize;
 use settings::Settings;
 use tauri::{
@@ -61,6 +61,11 @@ fn set_brake_force(percent: u8, state: State<AppState>) -> Result<Status, String
 }
 
 #[tauri::command]
+fn get_pedal(state: State<AppState>) -> PedalReading {
+    state.mapper.pedal()
+}
+
+#[tauri::command]
 fn get_autostart() -> bool {
     autostart::is_enabled()
 }
@@ -113,6 +118,30 @@ fn notify(app: &AppHandle) {
     let _ = app.emit("status-changed", app.state::<AppState>().status());
 }
 
+/// Streams the live brake position to the window at up to 60 Hz, only while
+/// it is visible and the position changes.
+fn stream_pedal(app: AppHandle) {
+    thread::spawn(move || {
+        let mut last = None;
+        loop {
+            thread::sleep(Duration::from_millis(16));
+            let visible = app
+                .get_webview_window("main")
+                .and_then(|w| w.is_visible().ok())
+                .unwrap_or(false);
+            if !visible {
+                last = None;
+                continue;
+            }
+            let reading = app.state::<AppState>().mapper.pedal();
+            if last != Some(reading) {
+                last = Some(reading);
+                let _ = app.emit("pedal", reading);
+            }
+        }
+    });
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -137,6 +166,7 @@ pub fn run() {
                 settings_path,
                 mapper,
             });
+            stream_pedal(app.handle().clone());
             build_tray(app)?;
             if std::env::args().any(|arg| arg == "--minimized") {
                 if let Some(window) = app.get_webview_window("main") {
@@ -148,6 +178,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_status,
             set_brake_force,
+            get_pedal,
             get_autostart,
             set_autostart
         ])

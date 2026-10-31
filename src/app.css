@@ -1,12 +1,17 @@
 :root {
-  --bg: #0b0c10;
-  --panel: #14161c;
-  --line: #262a33;
-  --text: #f1f2f5;
-  --muted: #8b909c;
+  --bg: #111214;
+  --surface: #17181b;
+  --raised: #202125;
+  --well: #0b0c0d;
+  --line: #26272b;
+  --line-strong: #3a3b41;
+  --text: #ececee;
+  --muted: #8d8e95;
+  --faint: #5c5d64;
   --accent: #ff5a1f;
-  --accent-2: #ff2d4a;
-  --ok: #34d17a;
+  --accent-dim: rgba(255, 90, 31, 0.35);
+  --ok: #3ccf74;
+  --mono: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", monospace;
   color-scheme: dark;
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 }

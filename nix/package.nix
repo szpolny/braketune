@@ -21,6 +21,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   src = lib.fileset.toSource {
     root = ../.;
     fileset = lib.fileset.unions [
+      ../assets/icon.svg
       ../package.json
       ../pnpm-lock.yaml
       ../index.html
