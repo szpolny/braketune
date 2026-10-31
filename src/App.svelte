@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import {
-    MAX_LEVEL,
-    MIN_LEVEL,
+    MAX_PERCENT,
+    MIN_PERCENT,
     getStatus,
     onStatusChanged,
     setApplyOnConnect,
@@ -11,13 +11,13 @@
   } from "./api";
 
   let status = $state<Status | null>(null);
-  let level = $state(5);
+  let level = $state(50);
   let error = $state("");
   let saved = $state(false);
   let savedTimer: ReturnType<typeof setTimeout>;
 
   const connected = $derived(status?.device != null);
-  const fill = $derived(((level - MIN_LEVEL) / (MAX_LEVEL - MIN_LEVEL)) * 100);
+  const fill = $derived(((level - MIN_PERCENT) / (MAX_PERCENT - MIN_PERCENT)) * 100);
 
   function sync(next: Status) {
     status = next;
@@ -63,23 +63,18 @@
   <section class="card">
     <div class="label">Brake force</div>
     <div class="readout">
-      <span class="value">{level}</span><span class="max">/ {MAX_LEVEL}</span>
+      <span class="value">{level}</span><span class="max">%</span>
     </div>
 
     <input
       type="range"
-      min={MIN_LEVEL}
-      max={MAX_LEVEL}
+      min={MIN_PERCENT}
+      max={MAX_PERCENT}
       step="1"
       bind:value={level}
       disabled={!connected}
       style="--fill: {fill}%"
     />
-    <div class="ticks">
-      {#each Array.from({ length: MAX_LEVEL }, (_, i) => i + 1) as n}
-        <span class:active={n === level}>{n}</span>
-      {/each}
-    </div>
     <div class="hint"><span>Softer</span><span>Stiffer</span></div>
 
     <button class="apply" onclick={apply} disabled={!connected}>
@@ -166,8 +161,6 @@
     background: #fff;
     border: 3px solid var(--accent);
   }
-  .ticks { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
-  .ticks .active { color: var(--text); font-weight: 700; }
   .hint { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
 
   .apply {

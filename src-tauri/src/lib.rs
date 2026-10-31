@@ -46,12 +46,12 @@ fn get_status(state: State<AppState>) -> Status {
 }
 
 #[tauri::command]
-fn set_brake_force(level: u8, state: State<AppState>) -> Result<Status, String> {
+fn set_brake_force(percent: u8, state: State<AppState>) -> Result<Status, String> {
     {
         let api = state.hid.lock().unwrap();
-        device::set_brake_force(&api, level).map_err(|e| e.to_string())?;
+        device::set_brake_force(&api, percent).map_err(|e| e.to_string())?;
     }
-    state.settings.lock().unwrap().brake_force = level;
+    state.settings.lock().unwrap().brake_force = percent;
     state.persist()?;
     Ok(state.status())
 }

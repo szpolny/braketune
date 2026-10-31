@@ -36,8 +36,8 @@ pub fn detect(api: &HidApi) -> Option<(DeviceInfo, std::ffi::CString)> {
         })
 }
 
-pub fn set_brake_force(api: &HidApi, level: u8) -> Result<DeviceInfo, DeviceError> {
-    let report = protocol::brake_force_report(level)?;
+pub fn set_brake_force(api: &HidApi, percent: u8) -> Result<DeviceInfo, DeviceError> {
+    let report = protocol::brake_force_report(percent)?;
     let (info, path) = detect(api).ok_or(DeviceError::NotFound)?;
     api.open_path(&path)?.write(&report)?;
     Ok(info)

@@ -6,7 +6,7 @@ The Fanatec control panel doesn't exist on Linux. BrakeTune covers one job: sett
 
 ## Features
 
-- Detects Fanatec pedals over USB and sets brake load-cell force (1–10)
+- Detects Fanatec pedals over USB and sets brake force (1–100%)
 - Remembers your setting and re-applies it whenever the pedals connect
 - Tiny native app, no Wine or Fanatec software required
 
