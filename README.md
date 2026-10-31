@@ -14,6 +14,8 @@ The Fanatec control panel doesn't exist on Linux. BrakeTune covers one job: sett
 
 ClubSport Pedals V3 / V3 Inverted, CSL Elite Pedals, CSL Pedals Load Cell (incl. LC V2).
 
+No kernel driver is needed: BrakeTune talks to the pedals through `hidraw`. It also works alongside [hid-fanatecff](https://github.com/gotzl/hid-fanatecff) if you use it for force feedback.
+
 > The command comes from the community-documented protocol of the [hid-fanatecff](https://github.com/gotzl/hid-fanatecff) driver, not from Fanatec. Unofficial and used at your own risk.
 
 ## Install
