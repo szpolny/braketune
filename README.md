@@ -6,7 +6,7 @@ The Fanatec control panel doesn't exist on Linux. BrakeTune brings its **brake f
 
 ## How it works
 
-BrakeTune reads your pedals, scales the brake axis (100% is the full, unmodified axis) and republishes everything as a virtual controller named **BrakeTune Pedals**. Pick that controller in your game or simulator. The original pedals are hidden while BrakeTune runs, and closing the window keeps it running in the tray.
+BrakeTune reads your pedals, scales the brake axis (100% is the unmodified axis; at 20%, a fifth of the pedal's range already gives full braking) and republishes everything as a virtual controller named **BrakeTune Pedals**. Pick that controller in your game or simulator. The original pedals are hidden while BrakeTune runs, and closing the window keeps it running in the tray.
 
 ## Supported pedals
 
