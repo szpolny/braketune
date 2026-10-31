@@ -1,0 +1,21 @@
+:root {
+  --bg: #0b0c10;
+  --panel: #14161c;
+  --line: #262a33;
+  --text: #f1f2f5;
+  --muted: #8b909c;
+  --accent: #ff5a1f;
+  --accent-2: #ff2d4a;
+  --ok: #34d17a;
+  color-scheme: dark;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  user-select: none;
+}
