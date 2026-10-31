@@ -3,6 +3,7 @@
   "packages": {
     ".": {
       "release-type": "node",
+      "bump-minor-pre-major": true,
       "package-name": "braketune",
       "include-component-in-tag": false,
       "extra-files": [
