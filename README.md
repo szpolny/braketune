@@ -2,13 +2,13 @@
 
 # BrakeTune
 
-A small, fast alternative to the Fanatec control panel for one job: setting the **brake force** of your pedals. Built with Tauri, Rust and Svelte.
+The Fanatec control panel doesn't exist on Linux. BrakeTune covers one job: setting the **brake force** of your pedals. Built with Tauri, Rust and Svelte.
 
 ## Features
 
 - Detects Fanatec pedals over USB and sets brake load-cell force (1–10)
 - Remembers your setting and re-applies it whenever the pedals connect
-- Tiny native app, no Fanatec software required
+- Tiny native app, no Wine or Fanatec software required
 
 ## Supported pedals
 
@@ -18,7 +18,7 @@ ClubSport Pedals V3 / V3 Inverted, CSL Elite Pedals, CSL Pedals Load Cell (incl.
 
 ## Install
 
-Download the installer for Windows from [Releases](https://github.com/szpolny/braketune/releases/latest).
+Grab a `.deb`, `.rpm` or `.AppImage` from [Releases](https://github.com/szpolny/braketune/releases/latest). The packages install a udev rule so your user can talk to the pedals; with the AppImage, copy [`70-braketune.rules`](src-tauri/udev/70-braketune.rules) to `/etc/udev/rules.d/` and replug the pedals.
 
 ## Development
 

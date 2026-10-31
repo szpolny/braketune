@@ -1,0 +1,2 @@
+# Grant the logged-in user access to Fanatec devices so BrakeTune can configure them.
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0eb7", TAG+="uaccess"
