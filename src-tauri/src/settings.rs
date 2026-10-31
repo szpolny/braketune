@@ -62,7 +62,7 @@ mod tests {
         saved.save(&path).unwrap();
         assert_eq!(Settings::load(&path), saved);
 
-        fs::write(&path, r#"{"brake_force": 99}"#).unwrap();
+        fs::write(&path, r#"{"brake_force": 250}"#).unwrap();
         assert_eq!(Settings::load(&path).brake_force, MAX_BRAKE_PERCENT);
         let _ = fs::remove_dir_all(dir);
     }
