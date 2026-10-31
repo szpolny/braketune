@@ -1,6 +1,6 @@
 [package]
 name = "braketune"
-version = "0.1.0"
+version = "0.2.0"
 description = "Brake force control for Fanatec pedals"
 authors = ["szpolny"]
 edition = "2021"
