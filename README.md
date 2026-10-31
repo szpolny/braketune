@@ -16,6 +16,8 @@ ClubSport Pedals V3 / V3 Inverted, CSL Elite Pedals, CSL Pedals Load Cell (incl.
 
 No kernel driver is needed: BrakeTune talks to the pedals through `hidraw`. It also works alongside [hid-fanatecff](https://github.com/gotzl/hid-fanatecff) if you use it for force feedback.
 
+> **Status:** the load-cell command is confirmed to be accepted by a ClubSport V3, but its effect on the V3 brake curve is not yet verified. Treat it as experimental.
+>
 > The command comes from the community-documented protocol of the [hid-fanatecff](https://github.com/gotzl/hid-fanatecff) driver, not from Fanatec. Unofficial and used at your own risk.
 
 ## Install
