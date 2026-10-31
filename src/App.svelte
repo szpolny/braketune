@@ -5,48 +5,36 @@
     MIN_PERCENT,
     getStatus,
     onStatusChanged,
-    setApplyOnConnect,
     setBrakeForce,
     type Status,
   } from "./api";
 
   let status = $state<Status | null>(null);
-  let level = $state(50);
+  let level = $state(MIN_PERCENT);
   let error = $state("");
-  let saved = $state(false);
-  let savedTimer: ReturnType<typeof setTimeout>;
+  let timer: ReturnType<typeof setTimeout>;
 
   const connected = $derived(status?.device != null);
   const fill = $derived(((level - MIN_PERCENT) / (MAX_PERCENT - MIN_PERCENT)) * 100);
 
-  function sync(next: Status) {
-    status = next;
-    level = next.settings.brake_force;
-  }
-
-  async function apply() {
-    error = "";
-    try {
-      sync(await setBrakeForce(level));
-      saved = true;
-      clearTimeout(savedTimer);
-      savedTimer = setTimeout(() => (saved = false), 1500);
-    } catch (e) {
-      error = String(e);
-    }
-  }
-
-  async function toggleAuto(event: Event) {
-    const enabled = (event.currentTarget as HTMLInputElement).checked;
-    sync(await setApplyOnConnect(enabled));
+  function schedule() {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      error = "";
+      try {
+        status = await setBrakeForce(level);
+      } catch (e) {
+        error = String(e);
+      }
+    }, 120);
   }
 
   onMount(() => {
-    getStatus().then(sync);
-    const unlisten = onStatusChanged((next) => {
+    getStatus().then((next) => {
       status = next;
-      if (!next.device) saved = false;
+      level = next.settings.brake_force;
     });
+    const unlisten = onStatusChanged((next) => (status = next));
     return () => unlisten.then((fn) => fn());
   });
 </script>
@@ -72,25 +60,19 @@
       max={MAX_PERCENT}
       step="1"
       bind:value={level}
+      oninput={schedule}
       disabled={!connected}
       style="--fill: {fill}%"
     />
-    <div class="hint"><span>Softer</span><span>Stiffer</span></div>
-
-    <button class="apply" onclick={apply} disabled={!connected}>
-      {saved ? "Applied ✓" : "Apply to pedals"}
-    </button>
+    <div class="hint"><span>Stock</span><span>3× signal</span></div>
     {#if error}<p class="error">{error}</p>{/if}
   </section>
 
-  <label class="toggle">
-    <input
-      type="checkbox"
-      checked={status?.settings.apply_on_connect ?? true}
-      onchange={toggleAuto}
-    />
-    <span>Re-apply automatically when pedals connect</span>
-  </label>
+  <p class="note">
+    Applied live. In your game or simulator, select the controller named
+    <strong>BrakeTune Pedals</strong>. The original pedals are hidden while
+    BrakeTune is running.
+  </p>
 
   <footer>Unofficial. Not affiliated with Fanatec.</footer>
 </main>
@@ -163,22 +145,10 @@
   }
   .hint { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
 
-  .apply {
-    margin-top: 6px;
-    padding: 14px;
-    border: 0;
-    border-radius: 12px;
-    font: inherit;
-    font-weight: 600;
-    color: #fff;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
-    cursor: pointer;
-  }
-  .apply:disabled { opacity: 0.35; cursor: not-allowed; }
   .error { color: #ff6b6b; font-size: 13px; user-select: text; }
 
-  .toggle { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); cursor: pointer; }
-  .toggle input { accent-color: var(--accent); width: 16px; height: 16px; }
+  .note { font-size: 13px; line-height: 1.5; color: var(--muted); }
+  .note strong { color: var(--text); }
 
   footer { margin-top: auto; font-size: 12px; color: var(--muted); text-align: center; }
 </style>

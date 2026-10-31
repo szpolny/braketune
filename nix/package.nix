@@ -10,7 +10,6 @@
   wrapGAppsHook3,
   webkitgtk_4_1,
   openssl,
-  systemd,
   glib-networking,
 }:
 
@@ -55,7 +54,6 @@ rustPlatform.buildRustPackage (finalAttrs: {
   buildInputs = [
     webkitgtk_4_1
     openssl
-    systemd
     glib-networking
   ];
 

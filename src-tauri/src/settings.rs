@@ -2,20 +2,18 @@ use std::{fs, io, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use crate::protocol::{MAX_BRAKE_PERCENT, MIN_BRAKE_PERCENT};
+use crate::scaling::{MAX_PERCENT, MIN_PERCENT};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(default)]
 pub struct Settings {
     pub brake_force: u8,
-    pub apply_on_connect: bool,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            brake_force: 50,
-            apply_on_connect: true,
+            brake_force: MIN_PERCENT,
         }
     }
 }
@@ -26,9 +24,7 @@ impl Settings {
             .ok()
             .and_then(|raw| serde_json::from_str(&raw).ok())
             .unwrap_or_default();
-        settings.brake_force = settings
-            .brake_force
-            .clamp(MIN_BRAKE_PERCENT, MAX_BRAKE_PERCENT);
+        settings.brake_force = settings.brake_force.clamp(MIN_PERCENT, MAX_PERCENT);
         settings
     }
 
@@ -55,15 +51,12 @@ mod tests {
     fn roundtrips_and_clamps() {
         let dir = std::env::temp_dir().join(format!("braketune-test-{}", std::process::id()));
         let path = dir.join("settings.json");
-        let saved = Settings {
-            brake_force: 70,
-            apply_on_connect: false,
-        };
+        let saved = Settings { brake_force: 70 };
         saved.save(&path).unwrap();
         assert_eq!(Settings::load(&path), saved);
 
         fs::write(&path, r#"{"brake_force": 250}"#).unwrap();
-        assert_eq!(Settings::load(&path).brake_force, MAX_BRAKE_PERCENT);
+        assert_eq!(Settings::load(&path).brake_force, MAX_PERCENT);
         let _ = fs::remove_dir_all(dir);
     }
 }

@@ -8,7 +8,6 @@ export interface Device {
 
 export interface Settings {
   brake_force: number;
-  apply_on_connect: boolean;
 }
 
 export interface Status {
@@ -22,7 +21,5 @@ export const MAX_PERCENT = 100;
 export const getStatus = () => invoke<Status>("get_status");
 export const setBrakeForce = (percent: number) =>
   invoke<Status>("set_brake_force", { percent });
-export const setApplyOnConnect = (enabled: boolean) =>
-  invoke<Status>("set_apply_on_connect", { enabled });
 export const onStatusChanged = (handler: (status: Status) => void) =>
   listen<Status>("status-changed", (e) => handler(e.payload));

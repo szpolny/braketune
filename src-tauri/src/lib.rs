@@ -1,11 +1,10 @@
-mod device;
-mod protocol;
+mod mapper;
+mod scaling;
 mod settings;
 
-use std::{path::PathBuf, sync::Mutex, thread, time::Duration};
+use std::{path::PathBuf, sync::Mutex};
 
-use device::DeviceInfo;
-use hidapi::HidApi;
+use mapper::{DeviceInfo, Mapper};
 use serde::Serialize;
 use settings::Settings;
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -13,8 +12,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 struct AppState {
     settings: Mutex<Settings>,
     settings_path: PathBuf,
-    hid: Mutex<HidApi>,
-    device: Mutex<Option<DeviceInfo>>,
+    mapper: Mapper,
 }
 
 #[derive(Serialize, Clone)]
@@ -26,17 +24,9 @@ struct Status {
 impl AppState {
     fn status(&self) -> Status {
         Status {
-            device: self.device.lock().unwrap().clone(),
+            device: self.mapper.device(),
             settings: self.settings.lock().unwrap().clone(),
         }
-    }
-
-    fn persist(&self) -> Result<(), String> {
-        self.settings
-            .lock()
-            .unwrap()
-            .save(&self.settings_path)
-            .map_err(|e| e.to_string())
     }
 }
 
@@ -47,53 +37,26 @@ fn get_status(state: State<AppState>) -> Status {
 
 #[tauri::command]
 fn set_brake_force(percent: u8, state: State<AppState>) -> Result<Status, String> {
-    {
-        let api = state.hid.lock().unwrap();
-        device::set_brake_force(&api, percent).map_err(|e| e.to_string())?;
+    if !(scaling::MIN_PERCENT..=scaling::MAX_PERCENT).contains(&percent) {
+        return Err(format!(
+            "brake force must be between {}% and {}%",
+            scaling::MIN_PERCENT,
+            scaling::MAX_PERCENT
+        ));
     }
-    state.settings.lock().unwrap().brake_force = percent;
-    state.persist()?;
+    {
+        let mut settings = state.settings.lock().unwrap();
+        settings.brake_force = percent;
+        settings
+            .save(&state.settings_path)
+            .map_err(|e| e.to_string())?;
+    }
+    state.mapper.set_percent(percent);
     Ok(state.status())
 }
 
-#[tauri::command]
-fn set_apply_on_connect(enabled: bool, state: State<AppState>) -> Result<Status, String> {
-    state.settings.lock().unwrap().apply_on_connect = enabled;
-    state.persist()?;
-    Ok(state.status())
-}
-
-/// Watches for pedals being plugged in or removed and re-applies the saved
-/// brake force on connect, since the pedals forget it when power cycled.
-fn spawn_watcher(app: AppHandle) {
-    thread::spawn(move || loop {
-        let state = app.state::<AppState>();
-        let found = {
-            let mut api = state.hid.lock().unwrap();
-            let _ = api.refresh_devices();
-            device::detect(&api).map(|(info, _)| info)
-        };
-
-        let changed = {
-            let mut current = state.device.lock().unwrap();
-            let changed = *current != found;
-            *current = found.clone();
-            changed
-        };
-
-        if changed {
-            let (apply, level) = {
-                let s = state.settings.lock().unwrap();
-                (s.apply_on_connect, s.brake_force)
-            };
-            if found.is_some() && apply {
-                let api = state.hid.lock().unwrap();
-                let _ = device::set_brake_force(&api, level);
-            }
-            let _ = app.emit("status-changed", state.status());
-        }
-        thread::sleep(Duration::from_secs(2));
-    });
+fn notify(app: &AppHandle) {
+    let _ = app.emit("status-changed", app.state::<AppState>().status());
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -101,20 +64,18 @@ pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             let settings_path = app.path().app_config_dir()?.join("settings.json");
+            let settings = Settings::load(&settings_path);
+            let mapper = Mapper::new(settings.brake_force);
+            let handle = app.handle().clone();
+            mapper.spawn(move || notify(&handle));
             app.manage(AppState {
-                settings: Mutex::new(Settings::load(&settings_path)),
+                settings: Mutex::new(settings),
                 settings_path,
-                hid: Mutex::new(HidApi::new()?),
-                device: Mutex::new(None),
+                mapper,
             });
-            spawn_watcher(app.handle().clone());
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![
-            get_status,
-            set_brake_force,
-            set_apply_on_connect
-        ])
+        .invoke_handler(tauri::generate_handler![get_status, set_brake_force])
         .run(tauri::generate_context!())
         .expect("error while running BrakeTune");
 }
