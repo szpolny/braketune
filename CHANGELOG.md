@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.0](https://github.com/szpolny/braketune/compare/v0.2.0...v0.3.0) (2026-11-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* **ui:** the desktop UI now requires a working Vulkan driver and builds entirely with Rust instead of Node.js and WebKit.
+
+### Features
+
+* **ui:** port the desktop app to GPUI ([6a0e296](https://github.com/szpolny/braketune/commit/6a0e29616fa485c5b1ccabc1c7d47befe3790a1c))
+
 ## [0.2.0](https://github.com/szpolny/braketune/compare/v0.1.0...v0.2.0) (2026-10-31)
 
 
