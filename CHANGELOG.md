@@ -2,6 +2,10 @@
 
 ## [0.3.0](https://github.com/szpolny/braketune/compare/v0.2.0...v0.3.0) (2026-11-07)
 
+BrakeTune now uses a native Rust GPUI interface. Brake force controls, live pedal meters, tray behavior, login startup, and existing settings are preserved.
+
+Available for Linux x86_64 through Nix, `.deb`, `.rpm`, and AppImage packages. A working Vulkan graphics driver is required.
+
 
 ### ⚠ BREAKING CHANGES
 
