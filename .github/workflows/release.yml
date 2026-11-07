@@ -1,6 +1,12 @@
 name: Release
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to rebuild
+        required: true
+        type: string
   push:
     branches: [main]
 
@@ -10,6 +16,7 @@ permissions:
 
 jobs:
   release-please:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.rp.outputs.release_created }}
@@ -23,25 +30,25 @@ jobs:
 
   build:
     needs: release-please
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    if: ${{ always() && (github.event_name == 'workflow_dispatch' || needs.release-please.outputs.release_created == 'true') }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.release-please.outputs.tag_name }}
+          ref: ${{ inputs.tag || needs.release-please.outputs.tag_name }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: swatinem/rust-cache@v2
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libxcb1-dev libfontconfig1-dev libfreetype6-dev libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libvulkan-dev libudev-dev
+          sudo apt-get install -y librsvg2-bin libxcb1-dev libfontconfig1-dev libfreetype6-dev libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libvulkan-dev libudev-dev
       - run: cargo build --release --locked
       - uses: actions/setup-go@v5
         with:
           go-version: stable
       - name: Package deb and rpm
         env:
-          TAG: ${{ needs.release-please.outputs.tag_name }}
+          TAG: ${{ inputs.tag || needs.release-please.outputs.tag_name }}
         run: |
           go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.48.0
           export VERSION="${TAG#v}"
@@ -51,14 +58,16 @@ jobs:
       - name: Package AppImage
         env:
           APPIMAGE_EXTRACT_AND_RUN: '1'
+          TAG: ${{ inputs.tag || needs.release-please.outputs.tag_name }}
         run: |
           curl --fail --location --output /tmp/linuxdeploy https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
           chmod +x /tmp/linuxdeploy
-          cp assets/icon.png /tmp/braketune.png
+          export VERSION="${TAG#v}"
+          rsvg-convert --width 512 --height 512 assets/icon.svg --output /tmp/braketune.png
           /tmp/linuxdeploy --appdir AppDir --executable target/release/braketune --desktop-file packaging/braketune.desktop --icon-file /tmp/braketune.png --library /usr/lib/x86_64-linux-gnu/libfontconfig.so.1 --library /usr/lib/x86_64-linux-gnu/libvulkan.so.1 --library /usr/lib/x86_64-linux-gnu/libwayland-client.so.0 --output appimage
           mv ./*.AppImage dist/
       - name: Upload release packages
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ needs.release-please.outputs.tag_name }}
-        run: gh release upload "$TAG" dist/*
+          TAG: ${{ inputs.tag || needs.release-please.outputs.tag_name }}
+        run: gh release upload "$TAG" dist/* --clobber
