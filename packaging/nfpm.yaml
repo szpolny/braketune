@@ -1,0 +1,24 @@
+name: braketune
+arch: amd64
+platform: linux
+version: ${VERSION}
+maintainer: szpolny
+homepage: https://github.com/szpolny/braketune
+description: Brake force control for Fanatec pedals
+license: MIT
+contents:
+  - src: target/release/braketune
+    dst: /usr/bin/braketune
+  - src: packaging/braketune.desktop
+    dst: /usr/share/applications/braketune.desktop
+  - src: assets/icon.svg
+    dst: /usr/share/icons/hicolor/scalable/apps/braketune.svg
+  - src: assets/icon.png
+    dst: /usr/share/icons/hicolor/1024x1024/apps/braketune.png
+  - src: packaging/udev/70-braketune.rules
+    dst: /usr/lib/udev/rules.d/70-braketune.rules
+overrides:
+  deb:
+    depends: [libfontconfig1, libfreetype6, libxkbcommon0, libxkbcommon-x11-0, libvulkan1, libwayland-client0, libx11-6, libxcursor1, libxi6, libxrandr2]
+  rpm:
+    depends: [fontconfig, freetype, libxkbcommon, libxkbcommon-x11, vulkan-loader, libwayland-client, libX11, libXcursor, libXi, libXrandr]

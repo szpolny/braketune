@@ -11,7 +11,10 @@ fn entry_path() -> Option<PathBuf> {
 fn exec_path() -> io::Result<PathBuf> {
     match env::var_os("APPIMAGE") {
         Some(path) => Ok(PathBuf::from(path)),
-        None => env::current_exe(),
+        None => match env::var_os("BRAKETUNE_EXECUTABLE") {
+            Some(path) => Ok(PathBuf::from(path)),
+            None => env::current_exe(),
+        },
     }
 }
 

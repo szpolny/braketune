@@ -24,35 +24,41 @@ jobs:
   build:
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-22.04]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.release-please.outputs.tag_name }}
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 12.9.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
       - uses: dtolnay/rust-toolchain@stable
       - uses: swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libudev-dev
-      - run: pnpm install --frozen-lockfile
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          sudo apt-get install -y libxcb1-dev libfontconfig1-dev libfreetype6-dev libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libvulkan-dev libudev-dev
+      - run: cargo build --release --locked
+      - uses: actions/setup-go@v5
         with:
-          tagName: ${{ needs.release-please.outputs.tag_name }}
-          releaseDraft: false
-          uploadWorkflowArtifacts: false
+          go-version: stable
+      - name: Package deb and rpm
+        env:
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.48.0
+          export VERSION="${TAG#v}"
+          mkdir -p dist
+          nfpm package --config packaging/nfpm.yaml --packager deb --target dist/
+          nfpm package --config packaging/nfpm.yaml --packager rpm --target dist/
+      - name: Package AppImage
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: '1'
+        run: |
+          curl --fail --location --output /tmp/linuxdeploy https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          chmod +x /tmp/linuxdeploy
+          cp assets/icon.png /tmp/braketune.png
+          /tmp/linuxdeploy --appdir AppDir --executable target/release/braketune --desktop-file packaging/braketune.desktop --icon-file /tmp/braketune.png --library /usr/lib/x86_64-linux-gnu/libfontconfig.so.1 --library /usr/lib/x86_64-linux-gnu/libvulkan.so.1 --library /usr/lib/x86_64-linux-gnu/libwayland-client.so.0 --output appimage
+          mv ./*.AppImage dist/
+      - name: Upload release packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: gh release upload "$TAG" dist/*

@@ -1,8 +1,11 @@
-node_modules/
-dist/
-target/
-src-tauri/gen/
+/target/
+/dist/
+/AppDir/
+/*.AppImage
 .direnv/
 result
 *.log
 .DS_Store
+# Local caches left by the previous frontend.
+/node_modules/
+/src-tauri/

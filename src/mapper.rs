@@ -4,15 +4,15 @@
 use std::{
     io,
     sync::{
-        atomic::{AtomicU16, AtomicU8, Ordering},
         Arc, Mutex,
+        atomic::{AtomicU8, AtomicU16, Ordering},
     },
     thread,
     time::Duration,
 };
 
 use evdev::{
-    uinput::VirtualDevice, AbsInfo, AbsoluteAxisCode, Device, EventType, InputEvent, UinputAbsSetup,
+    AbsInfo, AbsoluteAxisCode, Device, EventType, InputEvent, UinputAbsSetup, uinput::VirtualDevice,
 };
 use serde::Serialize;
 
@@ -86,18 +86,20 @@ impl Mapper {
         let percent = Arc::clone(&self.percent);
         let device = Arc::clone(&self.device);
         let pedal = Arc::clone(&self.pedal);
-        thread::spawn(move || loop {
-            if let Some((mut physical, info)) = find_pedals() {
-                *device.lock().unwrap() = Some(info);
-                on_change();
-                // Errors (typically the pedals being unplugged) end the session.
-                let _ = run_session(&mut physical, &percent, &pedal);
-                pedal.input.store(0, Ordering::Relaxed);
-                pedal.output.store(0, Ordering::Relaxed);
-                *device.lock().unwrap() = None;
-                on_change();
+        thread::spawn(move || {
+            loop {
+                if let Some((mut physical, info)) = find_pedals() {
+                    *device.lock().unwrap() = Some(info);
+                    on_change();
+                    // Errors (typically the pedals being unplugged) end the session.
+                    let _ = run_session(&mut physical, &percent, &pedal);
+                    pedal.input.store(0, Ordering::Relaxed);
+                    pedal.output.store(0, Ordering::Relaxed);
+                    *device.lock().unwrap() = None;
+                    on_change();
+                }
+                thread::sleep(Duration::from_secs(1));
             }
-            thread::sleep(Duration::from_secs(1));
         });
     }
 }

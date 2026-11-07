@@ -1,74 +1,47 @@
 {
   lib,
   rustPlatform,
-  fetchPnpmDeps,
-  pnpmConfigHook,
-  pnpm,
-  nodejs,
-  cargo-tauri,
   pkg-config,
-  wrapGAppsHook3,
-  webkitgtk_4_1,
-  openssl,
-  glib-networking,
-  libayatana-appindicator,
+  makeWrapper,
+  fontconfig,
+  freetype,
+  libxkbcommon,
+  wayland,
+  vulkan-loader,
+  libGL,
+  libxcb,
+  libx11,
+  libxcursor,
+  libxi,
+  libxrandr,
 }:
 
-rustPlatform.buildRustPackage (finalAttrs: {
+rustPlatform.buildRustPackage {
   pname = "braketune";
-  version = (builtins.fromJSON (builtins.readFile ../package.json)).version;
+  version = (builtins.fromTOML (builtins.readFile ../Cargo.toml)).package.version;
 
   src = lib.fileset.toSource {
     root = ../.;
     fileset = lib.fileset.unions [
-      ../assets/icon.svg
-      ../package.json
-      ../pnpm-lock.yaml
-      ../index.html
-      ../vite.config.ts
-      ../svelte.config.js
-      ../tsconfig.json
+      ../Cargo.toml
+      ../Cargo.lock
+      ../assets
       ../src
-      ../src-tauri
+      ../packaging
     ];
   };
-
-  cargoRoot = "src-tauri";
-  buildAndTestSubdir = "src-tauri";
-  cargoLock.lockFile = ../src-tauri/Cargo.lock;
-
-  pnpmDeps = fetchPnpmDeps {
-    inherit (finalAttrs) pname version src;
-    inherit pnpm;
-    fetcherVersion = 5;
-    hash = "sha256-hnVWMYqEL6271mUrosYDF9NNof5wL42aGPWhSg38Xcw=";
-  };
-
-  nativeBuildInputs = [
-    cargo-tauri.hook
-    pnpmConfigHook
-    pnpm
-    nodejs
-    pkg-config
-    wrapGAppsHook3
-  ];
-
-  buildInputs = [
-    webkitgtk_4_1
-    openssl
-    glib-networking
-    libayatana-appindicator
-  ];
-
-  preFixup = ''
-    gappsWrapperArgs+=(--prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ libayatana-appindicator ]})
-  '';
-
+  cargoLock.lockFile = ../Cargo.lock;
+  nativeBuildInputs = [ pkg-config makeWrapper ];
+  buildInputs = [ fontconfig freetype libxkbcommon wayland vulkan-loader libGL libxcb ];
   postInstall = ''
-    install -Dm444 src-tauri/udev/70-braketune.rules \
-      $out/lib/udev/rules.d/70-braketune.rules
+    install -Dm444 packaging/udev/70-braketune.rules $out/lib/udev/rules.d/70-braketune.rules
+    install -Dm444 packaging/braketune.desktop $out/share/applications/braketune.desktop
+    install -Dm444 assets/icon.svg $out/share/icons/hicolor/scalable/apps/braketune.svg
+    install -Dm444 assets/icon.png $out/share/icons/hicolor/1024x1024/apps/braketune.png
+    wrapProgram $out/bin/braketune --set BRAKETUNE_EXECUTABLE $out/bin/braketune --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [
+      libxkbcommon wayland vulkan-loader libGL libx11 libxcursor libxi libxrandr
+    ]}
   '';
-
   meta = {
     description = "Brake force control for Fanatec pedals";
     homepage = "https://github.com/szpolny/braketune";
@@ -76,4 +49,4 @@ rustPlatform.buildRustPackage (finalAttrs: {
     platforms = [ "x86_64-linux" ];
     mainProgram = "braketune";
   };
-})
+}

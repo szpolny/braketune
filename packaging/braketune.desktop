@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=BrakeTune
+Comment=Brake force control for Fanatec pedals
+Exec=braketune
+Icon=braketune
+Terminal=false
+Categories=Utility;
+StartupWMClass=braketune
